@@ -20,8 +20,8 @@ namespace ZeroMQTest.ConsoleUI
             try
             {
                 //HelloWorldTest();
-                //WeatherUpdateTest();
-                ParallelTaskTest();
+                WeatherUpdateTest();
+                //ParallelTaskTest();
             }
             catch (ZException ex)
             {
@@ -48,13 +48,28 @@ namespace ZeroMQTest.ConsoleUI
 
         static void WeatherUpdateTest()
         {
-            var server = new Thread(() => WeatherUpdate.WUServer("tcp://*:5556"));
-            var client = new Thread(() => WeatherUpdate.WUClient("tcp://127.0.0.1:5556"));
+            using (var context = ZContext.Create())
+            {
+                var server = new Thread(() => WeatherUpdate.WUServer(context, "tcp://*:5556"));
+                server.Start();
 
-            server.Start();
-            client.Start();
+                int numOfClients = 6;
+                var clients = new List<Thread>();
+                for (int i = 0; i < numOfClients; ++i)
+                {
+                    var client = new Thread(() => WeatherUpdate.WUClient(context, "tcp://127.0.0.1:5556"));
+                    client.Name = "Client " + i;
+                    clients.Add(client);
 
-            client.Join();
+                    client.Start();
+                }
+
+                foreach (var t in clients)
+                {
+                    t.Join();
+                }
+                server.Abort();
+            }
         }
 
         static void ParallelTaskTest()
