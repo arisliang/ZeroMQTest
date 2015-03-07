@@ -9,21 +9,24 @@ using ZeroMQ;
 
 namespace ZeroMQTest.Common.Patterns
 {
+    /// <summary>
+    /// Hello World using REQ and REP.
+    /// </summary>
     public static class HelloWorld
     {
-        public static void HWClient()
+        public static void HWClient(string address = "tcp://127.0.0.1:5555")
         {
             using (var context = ZContext.Create())
             {
                 using (var requester = ZSocket.Create(context, ZSocketType.REQ))
                 {
                     // Connect
-                    requester.Connect("tcp://127.0.0.1:5555");
+                    requester.Connect(address);
 
                     for (int n = 0; n < 10; ++n)
                     {
                         string requestText = string.Format("[{0}] Hello", n);
-                        LogService.Info(string.Format("Sending {0}...", requestText));
+                        LogService.Debug(string.Format("Client: Sending {0}...", requestText));
 
                         // Send
                         using (var request = new ZFrame(requestText))
@@ -34,29 +37,31 @@ namespace ZeroMQTest.Common.Patterns
                         // Receive
                         using (var reply = requester.ReceiveFrame())
                         {
-                            LogService.Info(string.Format(" Received: {0} {1}!", requestText, reply.ReadString()));
+                            LogService.Info(string.Format("Client: Received: {0} {1}!", requestText, reply.ReadString()));
                         }
                     }
                 }
             }
         }
 
-        public static void HWServer()
+        public static void HWServer(string address = "tcp://*:5555")
         {
             // Create
             using (var context = new ZContext())
             {
                 using (var responder = new ZSocket(context, ZSocketType.REP))
                 {
+                    LogService.Debug(string.Format("Server: Responder.Bind'ing on {0}", address));
+
                     // Bind
-                    responder.Bind("tcp://*:5555");
+                    responder.Bind(address);
 
                     while (true)
                     {
                         // Receive
                         using (ZFrame request = responder.ReceiveFrame())
                         {
-                            Console.WriteLine("Received {0}", request.ReadString());
+                            LogService.Info(string.Format("Server: Received {0}", request.ReadString()));
 
                             // Do some work
                             Thread.Sleep(1);

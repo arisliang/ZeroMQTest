@@ -19,7 +19,8 @@ namespace ZeroMQTest.ConsoleUI
 
             try
             {
-                HelloWorldTest();
+                //HelloWorldTest();
+                WeatherUpdateTest();
             }
             catch (ZException ex)
             {
@@ -34,11 +35,22 @@ namespace ZeroMQTest.ConsoleUI
         /// </summary>
         static void HelloWorldTest()
         {
-            var client = new Thread(HelloWorld.HWClient);
-            var server = new Thread(HelloWorld.HWServer);
+            var server = new Thread(() => HelloWorld.HWServer("tcp://*:5555"));
+            var client = new Thread(() => HelloWorld.HWClient("tcp://127.0.0.1:5555"));
 
-            client.Start();
             server.Start();
+            client.Start();
+
+            client.Join();
+        }
+
+        static void WeatherUpdateTest()
+        {
+            var server = new Thread(() => WeatherUpdate.WUServer("tcp://*:5556"));
+            var client = new Thread(() => WeatherUpdate.WUClient("tcp://127.0.0.1:5556"));
+
+            server.Start();
+            client.Start();
 
             client.Join();
         }
