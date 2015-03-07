@@ -51,7 +51,6 @@ namespace ZeroMQTest.Common.Patterns
                         sender.Send(action, 0, action.Length);
                     }
 
-                    sender.Close();
                     LogService.Debug(string.Format("Vent: Total expected cost: {0} ms", total_msec));
                 }
             }
@@ -110,8 +109,6 @@ namespace ZeroMQTest.Common.Patterns
                         LogService.Debug(".");
                     }
                 }
-
-                sink.Close();
 
                 // Calculate and report duration of batch
                 stopwatch.Stop();

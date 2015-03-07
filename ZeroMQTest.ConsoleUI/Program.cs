@@ -67,7 +67,7 @@ namespace ZeroMQTest.ConsoleUI
                 vent.Start();
 
                 var workers = new List<Thread>();
-                int numOfWorks = 2;
+                int numOfWorks = 4;
                 for (int i = 0; i < numOfWorks; ++i)
                 {
                     var worker = new Thread(() => ParallelTask.TaskWork(context, "tcp://127.0.0.1:5557", "tcp://127.0.0.1:5558"));
