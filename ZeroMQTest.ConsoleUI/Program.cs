@@ -29,6 +29,7 @@ namespace ZeroMQTest.ConsoleUI
             }
 
             LogService.Info("Application stopped.");
+            Console.ReadKey(true);
         }
 
         /// <summary>
@@ -58,15 +59,30 @@ namespace ZeroMQTest.ConsoleUI
 
         static void ParallelTaskTest()
         {
-            var vent = new Thread(() => ParallelTask.TaskVent("tcp://*:5557", "tcp://127.0.0.1:5558"));
-            var worker = new Thread(() => ParallelTask.TaskWork("tcp://127.0.0.1:5557", "tcp://127.0.0.1:5558"));
-            var sink = new Thread(() => ParallelTask.TaskSink("tcp://*:5558"));
+            using (var context = ZContext.Create())
+            {
+                var vent = new Thread(() => ParallelTask.TaskVent(context, "tcp://*:5557", "tcp://127.0.0.1:5558"));
+                var sink = new Thread(() => ParallelTask.TaskSink(context, "tcp://*:5558"));
+                sink.Start();
+                vent.Start();
 
-            vent.Start();
-            worker.Start();
-            sink.Start();
+                var workers = new List<Thread>();
+                int numOfWorks = 2;
+                for (int i = 0; i < numOfWorks; ++i)
+                {
+                    var worker = new Thread(() => ParallelTask.TaskWork(context, "tcp://127.0.0.1:5557", "tcp://127.0.0.1:5558"));
+                    worker.Name = "Worker " + i;
+                    workers.Add(worker);
+                    worker.Start();
+                }
 
-            sink.Join();
+                sink.Join();
+                vent.Join();
+                foreach (var t in workers)
+                {
+                    t.Abort();
+                }
+            }
         }
     }
 }
