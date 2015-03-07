@@ -22,7 +22,6 @@ namespace ZeroMQTest.Common.Patterns
             using (var sender = ZSocket.Create(context, ZSocketType.PUSH))
             {
                 sender.Bind(taskVentBindAddress);
-                sender.Linger = new TimeSpan(0, 0, 0);
 
                 using (var sink = ZSocket.Create(context, ZSocketType.PUSH))
                 {
@@ -63,16 +62,14 @@ namespace ZeroMQTest.Common.Patterns
             using (var receiver = ZSocket.Create(context, ZSocketType.PULL))
             {
                 receiver.Connect(taskVentConnectAddress);
-                receiver.Linger = new TimeSpan(0, 0, 0);
 
                 using (var sink = ZSocket.Create(context, ZSocketType.PUSH))
                 {
                     sink.Connect(taskSinkConnectAddress);
-                    sink.Linger = new TimeSpan(0, 0, 0);
 
                     // Process tasks forever
                     int length = sizeof(int);   // 4
-                    while (Thread.CurrentThread.ThreadState == System.Threading.ThreadState.Running)
+                    while (Thread.CurrentThread.IsAlive)
                     {
                         var replyBytes = new byte[length];
                         receiver.ReceiveBytes(replyBytes, 0, replyBytes.Length);
@@ -92,7 +89,6 @@ namespace ZeroMQTest.Common.Patterns
             using (var sink = ZSocket.Create(context, ZSocketType.PULL))
             {
                 sink.Bind(taskSinkBindAddress);
-                sink.Linger = new TimeSpan(0, 0, 0);
 
                 // Wait for start of batch
                 sink.ReceiveFrame();
