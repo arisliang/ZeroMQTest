@@ -1,6 +1,7 @@
 ﻿using Lycn.Common.Services;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -17,6 +18,8 @@ namespace ZeroMQTest.Common.Patterns
         static int numOfCollections = 100;
         public static void WUClient(ZContext context, string address = "tcp://*:5556", int zipcode = 72622)
         {
+            Contract.Requires(context != null);
+
             using (var subscriber = ZSocket.Create(context, ZSocketType.SUB))
             {
                 LogService.Debug(string.Format("{0}: Connecting to {1}...", Thread.CurrentThread.Name, address));
@@ -43,6 +46,8 @@ namespace ZeroMQTest.Common.Patterns
 
         public static void WUServer(ZContext context, string address = "tcp://*:5556")
         {
+            Contract.Requires(context != null);
+
             using (var publisher = ZSocket.Create(context, ZSocketType.PUB))
             {
                 LogService.Debug(string.Format("Server: Publisher.Bind'ing on {0}", address));
@@ -53,7 +58,7 @@ namespace ZeroMQTest.Common.Patterns
 
                 var rnd = new Random();
 
-                while (true)
+                while (Thread.CurrentThread.IsAlive)
                 {
                     int zipcode = rnd.Next(99999);
                     int temperature = rnd.Next(-55, +45);

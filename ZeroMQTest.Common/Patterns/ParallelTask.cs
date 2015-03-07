@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -19,6 +20,8 @@ namespace ZeroMQTest.Common.Patterns
 
         public static void TaskVent(ZContext context, string taskVentBindAddress = "tcp://*:5557", string taskSinkConnectAddress = "tcp://127.0.0.1:5558")
         {
+            Contract.Requires(context != null);
+
             using (var sender = ZSocket.Create(context, ZSocketType.PUSH))
             {
                 sender.Bind(taskVentBindAddress);
@@ -58,6 +61,8 @@ namespace ZeroMQTest.Common.Patterns
 
         public static void TaskWork(ZContext context, string taskVentConnectAddress = "tcp://127.0.0.1:5557", string taskSinkConnectAddress = "tcp://127.0.0.1:5558")
         {
+            Contract.Requires(context != null);
+
             using (var receiver = ZSocket.Create(context, ZSocketType.PULL))
             {
                 receiver.Connect(taskVentConnectAddress);
@@ -85,6 +90,8 @@ namespace ZeroMQTest.Common.Patterns
 
         public static void TaskSink(ZContext context, string taskSinkBindAddress = "tcp://*:5558")
         {
+            Contract.Requires(context != null);
+
             using (var sink = ZSocket.Create(context, ZSocketType.PULL))
             {
                 sink.Bind(taskSinkBindAddress);

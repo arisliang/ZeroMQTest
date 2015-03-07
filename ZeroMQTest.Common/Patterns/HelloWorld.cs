@@ -1,6 +1,7 @@
 ﻿using Lycn.Common.Services;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -14,62 +15,70 @@ namespace ZeroMQTest.Common.Patterns
     /// </summary>
     public static class HelloWorld
     {
-        public static void HWClient(string address = "tcp://127.0.0.1:5555")
+        public static void HWClient(ZContext context, string address = "tcp://127.0.0.1:5555")
         {
-            using (var context = ZContext.Create())
+            Contract.Requires(context != null);
+
+            using (var requester = ZSocket.Create(context, ZSocketType.REQ))
             {
-                using (var requester = ZSocket.Create(context, ZSocketType.REQ))
+                // Connect
+                requester.Connect(address);
+
+                for (int n = 0; n < 10; ++n)
                 {
-                    // Connect
-                    requester.Connect(address);
+                    string requestText = string.Format("[{0}] Hello", n);
+                    LogService.Debug(string.Format("{0}: Sending {1}...", Thread.CurrentThread.Name, requestText));
 
-                    for (int n = 0; n < 10; ++n)
+                    // Send
+                    using (var request = new ZFrame(requestText))
                     {
-                        string requestText = string.Format("[{0}] Hello", n);
-                        LogService.Debug(string.Format("Client: Sending {0}...", requestText));
+                        requester.Send(request);
+                    }
 
-                        // Send
-                        using (var request = new ZFrame(requestText))
-                        {
-                            requester.Send(request);
-                        }
-
-                        // Receive
-                        using (var reply = requester.ReceiveFrame())
-                        {
-                            LogService.Info(string.Format("Client: Received: {0} {1}!", requestText, reply.ReadString()));
-                        }
+                    // Receive
+                    using (var reply = requester.ReceiveFrame())
+                    {
+                        LogService.Info(string.Format("{0}: Received: {1} {2}!", Thread.CurrentThread.Name, requestText, reply.ReadString()));
                     }
                 }
             }
         }
 
-        public static void HWServer(string address = "tcp://*:5555")
+        public static void HWServer(ZContext context, string address = "tcp://*:5555")
         {
-            // Create
-            using (var context = new ZContext())
+            Contract.Requires(context != null);
+
+            using (var responder = new ZSocket(context, ZSocketType.REP))
             {
-                using (var responder = new ZSocket(context, ZSocketType.REP))
+                // Bind or connect via broker
+                if (address.Contains('*'))
                 {
-                    LogService.Debug(string.Format("Server: Responder.Bind'ing on {0}", address));
-
-                    // Bind
+                    LogService.Debug(string.Format("{0}: Responder binding on {1}", Thread.CurrentThread.Name, address));
                     responder.Bind(address);
+                }
+                else
+                {
+                    LogService.Debug(string.Format("{0}: Responder connecting on {1}", Thread.CurrentThread.Name, address));
+                    responder.Connect(address);
+                }
 
-                    while (true)
+                string name = "World";
+                while (Thread.CurrentThread.IsAlive)
+                {
+                    // Wait for next request from client
+                    using (ZFrame request = responder.ReceiveFrame())
                     {
-                        // Receive
-                        using (ZFrame request = responder.ReceiveFrame())
-                        {
-                            LogService.Info(string.Format("Server: Received {0}", request.ReadString()));
+                        LogService.Info(string.Format("{0}: {1} ", Thread.CurrentThread.Name, request.ReadString()));
+                    }
 
-                            // Do some work
-                            Thread.Sleep(1);
+                    // Do some 'work'
+                    Thread.Sleep(1);
 
-                            // Send
-                            string name = "World";
-                            responder.Send(new ZFrame(name));
-                        }
+                    // Send reply back to client
+                    LogService.Info(string.Format("{0}: {1}… ", Thread.CurrentThread.Name, name));
+                    using (var reply = new ZFrame(name))
+                    {
+                        responder.Send(reply);
                     }
                 }
             }
