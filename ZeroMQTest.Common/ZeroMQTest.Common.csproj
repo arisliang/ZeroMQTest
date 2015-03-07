@@ -76,6 +76,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Patterns\HelloWorld.cs" />
+    <Compile Include="Patterns\ParallelTask.cs" />
     <Compile Include="Patterns\WeatherUpdate.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

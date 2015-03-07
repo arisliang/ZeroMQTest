@@ -20,7 +20,8 @@ namespace ZeroMQTest.ConsoleUI
             try
             {
                 //HelloWorldTest();
-                WeatherUpdateTest();
+                //WeatherUpdateTest();
+                ParallelTaskTest();
             }
             catch (ZException ex)
             {
@@ -53,6 +54,19 @@ namespace ZeroMQTest.ConsoleUI
             client.Start();
 
             client.Join();
+        }
+
+        static void ParallelTaskTest()
+        {
+            var vent = new Thread(() => ParallelTask.TaskVent("tcp://*:5557", "tcp://127.0.0.1:5558"));
+            var worker = new Thread(() => ParallelTask.TaskWork("tcp://127.0.0.1:5557", "tcp://127.0.0.1:5558"));
+            var sink = new Thread(() => ParallelTask.TaskSink("tcp://*:5558"));
+
+            vent.Start();
+            worker.Start();
+            sink.Start();
+
+            sink.Join();
         }
     }
 }
