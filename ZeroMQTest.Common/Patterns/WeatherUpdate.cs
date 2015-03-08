@@ -16,7 +16,7 @@ namespace ZeroMQTest.Common.Patterns
     public static class WeatherUpdate
     {
         static int numOfCollections = 100;
-        public static void WUClient(ZContext context, string address = "tcp://*:5556", int zipcode = 72622)
+        public static void WUClient(ZContext context, string address = "tcp://127.0.0.1:5556", int zipcode = 72622)
         {
             Contract.Requires(context != null);
 

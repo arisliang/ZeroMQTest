@@ -23,7 +23,8 @@ namespace ZeroMQTest.ConsoleUI
                 //WeatherUpdateTest();
                 //ParallelTaskTest();
                 //RequestReplyTest();
-                MessageQueueBrokerTest();
+                //MessageQueueBrokerTest();
+                WeatherUpdateProxyTest();
             }
             catch (ZException ex)
             {
@@ -185,6 +186,37 @@ namespace ZeroMQTest.ConsoleUI
                 worker.Abort();
             }
             broker.Abort();
+        }
+
+        static void WeatherUpdateProxyTest()
+        {
+            using (var context = ZContext.Create())
+            {
+                var server = new Thread(() => WeatherUpdate.WUServer(context));
+                server.Start();
+                Thread.Sleep(1000);
+
+                var proxy = new Thread(() => WeatherUpdateProxy.WUProxy());
+                proxy.Start();
+                Thread.Sleep(1000);
+
+                int numOfClients = 6;
+                var clients = new List<Thread>(numOfClients);
+                for (int i = 0; i < numOfClients; ++i)
+                {
+                    var client = new Thread(() => WeatherUpdate.WUClient(context));
+                    client.Name = "Client " + i;
+                    clients.Add(client);
+
+                    client.Start();
+                }
+
+                foreach (var t in clients)
+                {
+                    t.Join();
+                }
+                server.Abort();
+            }
         }
     }
 }
