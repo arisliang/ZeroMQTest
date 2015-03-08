@@ -75,6 +75,9 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Patterns\HandlingInterruptSignals.cs" />
+    <Compile Include="Patterns\MultithreadedRelay.cs" />
+    <Compile Include="Patterns\MultithreadedService.cs" />
     <Compile Include="Patterns\ParallelTaskWithKill.cs" />
     <Compile Include="Patterns\HelloWorld.cs" />
     <Compile Include="Patterns\MessageQueueBroker.cs" />

@@ -24,7 +24,11 @@ namespace ZeroMQTest.ConsoleUI
                 //ParallelTaskTest();
                 //RequestReplyTest();
                 //MessageQueueBrokerTest();
-                WeatherUpdateProxyTest();
+                //WeatherUpdateProxyTest();
+                //ParallelTaskWithKillTest();
+                //HandlingInterruptSignalsTest();
+                //MultithreadedServiceTest();
+                MultithreadedRelayTest();
             }
             catch (ZException ex)
             {
@@ -217,6 +221,69 @@ namespace ZeroMQTest.ConsoleUI
                 }
                 server.Abort();
             }
+        }
+
+        static void ParallelTaskWithKillTest()
+        {
+            using (var context = ZContext.Create())
+            {
+                var vent = new Thread(() => ParallelTaskWithKill.TaskVent(context, "tcp://*:5557", "tcp://127.0.0.1:5558"));
+                var sink = new Thread(() => ParallelTaskWithKill.TaskSink(context, "tcp://*:5558"));
+                sink.Start();
+                vent.Start();
+
+                int numOfWorks = 4;
+                var workers = new List<Thread>(numOfWorks);
+                for (int i = 0; i < numOfWorks; ++i)
+                {
+                    var worker = new Thread(() => ParallelTaskWithKill.TaskWork(context, "tcp://127.0.0.1:5557", "tcp://127.0.0.1:5558"));
+                    worker.Name = "Worker " + i;
+                    workers.Add(worker);
+                    worker.Start();
+                }
+
+                sink.Join();
+                vent.Join();
+                foreach (var t in workers)
+                {
+                    t.Abort();
+                }
+            }
+        }
+
+        static void HandlingInterruptSignalsTest()
+        {
+            using (var context = ZContext.Create())
+            {
+                var server = new Thread(() => HandlingInterruptSignals.Interrupt());
+                var client = new Thread(() => HelloWorld.HWClient(context, "tcp://127.0.0.1:5555"));
+
+                server.Start();
+                client.Start();
+
+                client.Join();
+                server.Abort();
+            }
+        }
+
+        static void MultithreadedServiceTest()
+        {
+            using (var context = ZContext.Create())
+            {
+                var client = new Thread(() => HelloWorld.HWClient(context, "tcp://127.0.0.1:5555"));
+                client.Name = "[Client]";
+                client.Start();
+                MultithreadedService.MTServer();
+
+                client.Join();
+            }
+        }
+
+        static void MultithreadedRelayTest()
+        {
+            var thread = new Thread(() => MultithreadedRelay.MTRelay_step3());
+            thread.Name = "Relay Entry: Step 3";
+            thread.Start();
         }
     }
 }
