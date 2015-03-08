@@ -104,43 +104,44 @@ namespace ZeroMQTest.ConsoleUI
 
         static void RequestReplyTest()
         {
-            using (var context = ZContext.Create())
+            var broker = new Thread(() => RequestReply.RRBroker());
+            broker.Name = "Broker";
+            broker.Start();
+
+            Thread.Sleep(1000);
+
+            int numOfClients = 4;
+            int numOfWorkers = 2;
+            var clients = new List<Thread>(numOfClients);
+            var workers = new List<Thread>(numOfWorkers);
+
+            for (int i = 0; i < numOfWorkers; i++)
             {
-                var broker = new Thread(() => RequestReply.RRBroker(context));
-                broker.Name = "Broker";
-                broker.Start();
-
-                return;
-
-                int numOfClients = 4;
-                int numOfWorkers = 2;
-                var clients = new List<Thread>(numOfClients);
-                var workers = new List<Thread>(numOfWorkers);
-
-                for (int i = 0; i < numOfClients; i++)
-                {
-                    var client = new Thread(() => RequestReply.RRClient(context));
-                    client.Name = "Client " + i;
-                    client.Start();
-                }
-
-                for (int i = 0; i < numOfWorkers; i++)
-                {
-                    var worker = new Thread(() => RequestReply.RRWorker(context));
-                    worker.Name = "Worker " + i;
-                    worker.Start();
-                }
-
-                foreach (var client in clients)
-                {
-                    client.Join();
-                }
-                foreach (var worker in workers)
-                {
-                    worker.Abort();
-                }
-                broker.Abort();
+                var worker = new Thread(() => RequestReply.RRWorker());
+                worker.Name = "Worker " + i;
+                worker.Start();
             }
+
+            Thread.Sleep(1000);
+
+            for (int i = 0; i < numOfClients; i++)
+            {
+                var client = new Thread(() => RequestReply.RRClient());
+                client.Name = "Client " + i;
+                client.Start();
+            }
+
+            Thread.Sleep(1000);
+
+            foreach (var client in clients)
+            {
+                client.Join();
+            }
+            foreach (var worker in workers)
+            {
+                worker.Abort();
+            }
+            broker.Abort();
         }
     }
 }

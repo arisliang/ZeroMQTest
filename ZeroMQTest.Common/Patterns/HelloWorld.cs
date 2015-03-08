@@ -22,6 +22,7 @@ namespace ZeroMQTest.Common.Patterns
             using (var requester = ZSocket.Create(context, ZSocketType.REQ))
             {
                 // Connect
+                LogService.Debug(string.Format("{0}: client connecting on {1}.", Thread.CurrentThread.Name, address));
                 requester.Connect(address);
 
                 for (int n = 0; n < 10; ++n)
