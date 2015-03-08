@@ -28,7 +28,8 @@ namespace ZeroMQTest.ConsoleUI
                 //ParallelTaskWithKillTest();
                 //HandlingInterruptSignalsTest();
                 //MultithreadedServiceTest();
-                MultithreadedRelayTest();
+                //MultithreadedRelayTest();
+                NodeCoordinationTest();
             }
             catch (ZException ex)
             {
@@ -284,6 +285,23 @@ namespace ZeroMQTest.ConsoleUI
             var thread = new Thread(() => MultithreadedRelay.MTRelay_step3());
             thread.Name = "Relay Entry: Step 3";
             thread.Start();
+        }
+
+        static void NodeCoordinationTest()
+        {
+            int numOfSubscribers = 10;
+
+            var publisher = new Thread(() => NodeCoordination.SyncPub(numOfSubscribers));
+            publisher.Name = "[Publisher]";
+            publisher.Start();
+            
+            var subscribers = new List<Thread>(numOfSubscribers);
+            for (int i = 0; i < numOfSubscribers; i++)
+            {
+                var subscriber = new Thread(() => NodeCoordination.SyncSub());
+                subscriber.Name = string.Format("[Subscriber {0}]", i);
+                subscriber.Start();
+            }
         }
     }
 }
