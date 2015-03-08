@@ -22,7 +22,8 @@ namespace ZeroMQTest.ConsoleUI
                 //HelloWorldTest();
                 //WeatherUpdateTest();
                 //ParallelTaskTest();
-                RequestReplyTest();
+                //RequestReplyTest();
+                MessageQueueBrokerTest();
             }
             catch (ZException ex)
             {
@@ -106,6 +107,48 @@ namespace ZeroMQTest.ConsoleUI
         {
             var broker = new Thread(() => RequestReply.RRBroker());
             broker.Name = "Broker";
+            broker.Start();
+
+            Thread.Sleep(1000);
+
+            int numOfClients = 4;
+            int numOfWorkers = 2;
+            var clients = new List<Thread>(numOfClients);
+            var workers = new List<Thread>(numOfWorkers);
+
+            for (int i = 0; i < numOfWorkers; i++)
+            {
+                var worker = new Thread(() => RequestReply.RRWorker());
+                worker.Name = "Worker " + i;
+                worker.Start();
+            }
+
+            Thread.Sleep(1000);
+
+            for (int i = 0; i < numOfClients; i++)
+            {
+                var client = new Thread(() => RequestReply.RRClient());
+                client.Name = "Client " + i;
+                client.Start();
+            }
+
+            Thread.Sleep(1000);
+
+            foreach (var client in clients)
+            {
+                client.Join();
+            }
+            foreach (var worker in workers)
+            {
+                worker.Abort();
+            }
+            broker.Abort();
+        }
+
+        static void MessageQueueBrokerTest()
+        {
+            var broker = new Thread(() => MessageQueueBroker.MsgQueue());
+            broker.Name = "Msg Broker";
             broker.Start();
 
             Thread.Sleep(1000);
