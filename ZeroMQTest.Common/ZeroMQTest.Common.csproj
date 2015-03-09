@@ -84,6 +84,7 @@
     <Compile Include="Patterns\MessageQueueBroker.cs" />
     <Compile Include="Patterns\MultipleSocket.cs" />
     <Compile Include="Patterns\ParallelTask.cs" />
+    <Compile Include="Patterns\PubSubEnvelope.cs" />
     <Compile Include="Patterns\RequestReply.cs" />
     <Compile Include="Patterns\WeatherUpdate.cs" />
     <Compile Include="Patterns\WeatherUpdateProxy.cs" />

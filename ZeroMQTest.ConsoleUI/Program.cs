@@ -29,7 +29,8 @@ namespace ZeroMQTest.ConsoleUI
                 //HandlingInterruptSignalsTest();
                 //MultithreadedServiceTest();
                 //MultithreadedRelayTest();
-                NodeCoordinationTest();
+                //NodeCoordinationTest();
+                PubSubEnvelopeTest();
             }
             catch (ZException ex)
             {
@@ -294,11 +295,33 @@ namespace ZeroMQTest.ConsoleUI
             var publisher = new Thread(() => NodeCoordination.SyncPub(numOfSubscribers));
             publisher.Name = "[Publisher]";
             publisher.Start();
-            
+
             var subscribers = new List<Thread>(numOfSubscribers);
             for (int i = 0; i < numOfSubscribers; i++)
             {
                 var subscriber = new Thread(() => NodeCoordination.SyncSub());
+                subscriber.Name = string.Format("[Subscriber {0}]", i);
+                subscriber.Start();
+            }
+        }
+
+        static void PubSubEnvelopeTest()
+        {
+            var publisher = new Thread(() =>
+            {
+                PubSubEnvelope.PSEnvPub();
+            });
+            publisher.Name = "[Publisher]";
+            publisher.Start();
+
+            int numOfSubscribers = 3;
+            var subscribers = new List<Thread>();
+            for (int i = 0; i < numOfSubscribers; i++)
+            {
+                var subscriber = new Thread(() =>
+                {
+                    PubSubEnvelope.PSEnvSub();
+                });
                 subscriber.Name = string.Format("[Subscriber {0}]", i);
                 subscriber.Start();
             }
