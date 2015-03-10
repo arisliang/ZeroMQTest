@@ -15,7 +15,7 @@ namespace ZeroMQTest.ConsoleUI
         static void Main(string[] args)
         {
             LogService.Name = "ZeroMQ Test";
-            LogService.Info("Application started.");
+            LogService.Debug("Application started.");
 
             try
             {
@@ -30,14 +30,15 @@ namespace ZeroMQTest.ConsoleUI
                 //MultithreadedServiceTest();
                 //MultithreadedRelayTest();
                 //NodeCoordinationTest();
-                PubSubEnvelopeTest();
+                //PubSubEnvelopeTest();
+                RouterReqTest();
             }
             catch (ZException ex)
             {
                 LogService.Error(string.Format("{0}\n{1}", ex.Message, ex.StackTrace));
             }
 
-            LogService.Info("Application stopped.");
+            LogService.Debug("Application stopped.");
             Console.ReadKey(true);
         }
 
@@ -324,6 +325,40 @@ namespace ZeroMQTest.ConsoleUI
                 });
                 subscriber.Name = string.Format("[Subscriber {0}]", i);
                 subscriber.Start();
+            }
+        }
+
+        private static void RouterReqTest()
+        {
+            int numOfWorkers = 10;
+
+            var broker = new Thread(() =>
+            {
+                RouterReq.RTReq_Broker(numOfWorkers);
+            });
+            broker.Name = "Broker";
+            broker.Start();
+
+            Thread.Sleep(10);
+
+            var workers = new List<Thread>(numOfWorkers);
+            for (int i = 0; i < numOfWorkers; i++)
+            {
+                var worker = new Thread(() =>
+                {
+                    RouterReq.RTReq_Worker(i);
+                });
+                worker.Name = "Worker " + i;
+                worker.Start();
+
+                Thread.Sleep(10);
+            }
+
+            broker.Join();
+
+            foreach (var worker in workers)
+            {
+                worker.Join();
             }
         }
     }

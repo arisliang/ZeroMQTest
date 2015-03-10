@@ -86,6 +86,7 @@
     <Compile Include="Patterns\ParallelTask.cs" />
     <Compile Include="Patterns\PubSubEnvelope.cs" />
     <Compile Include="Patterns\RequestReply.cs" />
+    <Compile Include="Patterns\RouterReq.cs" />
     <Compile Include="Patterns\WeatherUpdate.cs" />
     <Compile Include="Patterns\WeatherUpdateProxy.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
