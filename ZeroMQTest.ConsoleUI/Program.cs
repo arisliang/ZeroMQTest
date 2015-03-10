@@ -31,7 +31,8 @@ namespace ZeroMQTest.ConsoleUI
                 //MultithreadedRelayTest();
                 //NodeCoordinationTest();
                 //PubSubEnvelopeTest();
-                RouterReqTest();
+                //RouterReqTest();
+                RouterDealerTest();
             }
             catch (ZException ex)
             {
@@ -328,7 +329,7 @@ namespace ZeroMQTest.ConsoleUI
             }
         }
 
-        private static void RouterReqTest()
+        static void RouterReqTest()
         {
             int numOfWorkers = 10;
 
@@ -360,6 +361,42 @@ namespace ZeroMQTest.ConsoleUI
             {
                 worker.Join();
             }
+        }
+
+        static void RouterDealerTest()
+        {
+            int numOfDealers = 4;
+
+            var broker = new Thread(() =>
+            {
+                RouterDealer.RTDealer_Broker(numOfDealers);
+            });
+            broker.Name = "Broker";
+            broker.Start();
+
+            Thread.Sleep(10);
+
+            var workers = new List<Thread>(numOfDealers);
+            for (int i = 0; i < numOfDealers; i++)
+            {
+                var worker = new Thread(() =>
+                {
+                    RouterDealer.RTDealer_Worker(i);
+                });
+                worker.Name = "Dealer " + i;
+                worker.Start();
+
+                Thread.Sleep(10);
+            }
+
+            foreach (var worker in workers)
+            {
+                worker.Join();
+                LogService.Debug(string.Format("{0}: done.", worker.Name));
+            }
+
+            broker.Join();
+            LogService.Debug(string.Format("{0}: done.", broker.Name));
         }
     }
 }
