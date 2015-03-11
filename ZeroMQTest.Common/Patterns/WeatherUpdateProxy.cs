@@ -24,7 +24,7 @@ namespace ZeroMQTest.Common.Patterns
                 using (var frontend = ZSocket.Create(context, ZSocketType.XSUB))
                 {
                     // Frontend is where the weather server sits
-                    LogService.Debug(string.Format("{0}: Frontend connecting to {1}", Thread.CurrentThread.Name, frontendConnectAddess));
+                    LogService.Debug("{0}: Frontend connecting to {1}", Thread.CurrentThread.Name, frontendConnectAddess);
                     frontend.Connect(frontendConnectAddess);
 
                     using (var backend = ZSocket.Create(context, ZSocketType.XPUB))
@@ -33,11 +33,11 @@ namespace ZeroMQTest.Common.Patterns
                         foreach (IPAddress address in WUProxy_GetPublicIPs())
                         {
                             var tcpAddress = string.Format("tcp://{0}:8100", address);
-                            LogService.Debug(string.Format("{0}: Backend binding on {1}", Thread.CurrentThread.Name, tcpAddress));
+                            LogService.Debug("{0}: Backend binding on {1}", Thread.CurrentThread.Name, tcpAddress);
                             backend.Bind(tcpAddress);
 
                             var epgmAddress = string.Format("epgm://{0};239.192.1.1:8100", address);
-                            LogService.Debug(string.Format("{0}: backend binding on {1}", Thread.CurrentThread.Name, epgmAddress));
+                            LogService.Debug("{0}: backend binding on {1}", Thread.CurrentThread.Name, epgmAddress);
                             backend.Bind(epgmAddress);  // Protocol not supported.
                         }
                         using (var subscription = ZFrame.Create(1))

@@ -28,7 +28,7 @@ namespace ZeroMQTest.Common.Patterns
                         int subscribers = numOfSubscribers;
                         do
                         {
-                            LogService.Debug(string.Format("{0}: Waiting for {1} subscriber(s)", Thread.CurrentThread.Name, subscribers));
+                            LogService.Debug("{0}: Waiting for {1} subscriber(s)", Thread.CurrentThread.Name, subscribers);
 
                             // - wait for synchronization request
                             syncservice.ReceiveFrame();
@@ -39,10 +39,10 @@ namespace ZeroMQTest.Common.Patterns
                         while (--subscribers > 0);
 
                         // Now broadcast exactly 20 updates followed by END
-                        LogService.Debug(string.Format("{0}: Broadcasting messages", Thread.CurrentThread.Name));
+                        LogService.Debug("{0}: Broadcasting messages", Thread.CurrentThread.Name);
                         for (int i = 0; i < 20; i++)
                         {
-                            LogService.Debug(string.Format("{0}: Sending {1}...", Thread.CurrentThread.Name, i));
+                            LogService.Debug("{0}: Sending {1}...", Thread.CurrentThread.Name, i);
                             publisher.Send(new ZFrame(i));
 
                             Thread.Sleep(1);
@@ -87,17 +87,17 @@ namespace ZeroMQTest.Common.Patterns
                                 string text = frame.ReadString();
                                 if (text == "END")
                                 {
-                                    LogService.Debug(string.Format("{0}: Receiving {1}...", Thread.CurrentThread.Name, text));
+                                    LogService.Debug("{0}: Receiving {1}...", Thread.CurrentThread.Name, text);
                                     break;
                                 }
 
                                 frame.Position = 0;
-                                LogService.Debug(string.Format("{0}: Receiving {1}...", Thread.CurrentThread.Name, frame.ReadInt32()));
+                                LogService.Debug("{0}: Receiving {1}...", Thread.CurrentThread.Name, frame.ReadInt32());
 
                                 ++i;
                             }
                         }
-                        LogService.Debug(string.Format("{0}: Received {1} updates.", Thread.CurrentThread.Name, i));
+                        LogService.Debug("{0}: Received {1} updates.", Thread.CurrentThread.Name, i);
                     }
                 }
             }

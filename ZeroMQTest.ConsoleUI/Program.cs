@@ -1,4 +1,5 @@
-﻿using Lycn.Common.Services;
+﻿using Lycn.Common.Aspects;
+using Lycn.Common.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,6 +7,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using ZeroMQ;
+using ZeroMQTest.Common;
 using ZeroMQTest.Common.Patterns;
 
 namespace ZeroMQTest.ConsoleUI
@@ -32,17 +34,23 @@ namespace ZeroMQTest.ConsoleUI
                 //NodeCoordinationTest();
                 //PubSubEnvelopeTest();
                 //RouterReqTest();
-                RouterDealerTest();
+                //RouterDealerTest();
+                LBBrokerTest();
             }
             catch (ZException ex)
             {
-                LogService.Error(string.Format("{0}\n{1}", ex.Message, ex.StackTrace));
+                LogService.Error("{0}\n{1}", ex.Message, ex.StackTrace);
+            }
+            catch (Exception ex)
+            {
+                LogService.Error("{0}\n{1}", ex.Message, ex.StackTrace);
             }
 
             LogService.Debug("Application stopped.");
             Console.ReadKey(true);
         }
 
+        [TraceAspect]
         static void HelloWorldTest()
         {
             using (var context = ZContext.Create())
@@ -58,6 +66,7 @@ namespace ZeroMQTest.ConsoleUI
             }
         }
 
+        [TraceAspect]
         static void WeatherUpdateTest()
         {
             using (var context = ZContext.Create())
@@ -84,6 +93,7 @@ namespace ZeroMQTest.ConsoleUI
             }
         }
 
+        [TraceAspect]
         static void ParallelTaskTest()
         {
             using (var context = ZContext.Create())
@@ -112,13 +122,14 @@ namespace ZeroMQTest.ConsoleUI
             }
         }
 
+        [TraceAspect]
         static void RequestReplyTest()
         {
             var broker = new Thread(() => RequestReply.RRBroker());
             broker.Name = "Broker";
             broker.Start();
 
-            Thread.Sleep(1000);
+            Thread.Sleep(AppSetting.WAITINGMS);
 
             int numOfClients = 4;
             int numOfWorkers = 2;
@@ -132,7 +143,7 @@ namespace ZeroMQTest.ConsoleUI
                 worker.Start();
             }
 
-            Thread.Sleep(1000);
+            Thread.Sleep(AppSetting.WAITINGMS);
 
             for (int i = 0; i < numOfClients; i++)
             {
@@ -141,7 +152,7 @@ namespace ZeroMQTest.ConsoleUI
                 client.Start();
             }
 
-            Thread.Sleep(1000);
+            Thread.Sleep(AppSetting.WAITINGMS);
 
             foreach (var client in clients)
             {
@@ -154,13 +165,14 @@ namespace ZeroMQTest.ConsoleUI
             broker.Abort();
         }
 
+        [TraceAspect]
         static void MessageQueueBrokerTest()
         {
             var broker = new Thread(() => MessageQueueBroker.MsgQueue());
             broker.Name = "Msg Broker";
             broker.Start();
 
-            Thread.Sleep(1000);
+            Thread.Sleep(AppSetting.WAITINGMS);
 
             int numOfClients = 4;
             int numOfWorkers = 2;
@@ -174,7 +186,7 @@ namespace ZeroMQTest.ConsoleUI
                 worker.Start();
             }
 
-            Thread.Sleep(1000);
+            Thread.Sleep(AppSetting.WAITINGMS);
 
             for (int i = 0; i < numOfClients; i++)
             {
@@ -183,7 +195,7 @@ namespace ZeroMQTest.ConsoleUI
                 client.Start();
             }
 
-            Thread.Sleep(1000);
+            Thread.Sleep(AppSetting.WAITINGMS);
 
             foreach (var client in clients)
             {
@@ -196,17 +208,18 @@ namespace ZeroMQTest.ConsoleUI
             broker.Abort();
         }
 
+        [TraceAspect]
         static void WeatherUpdateProxyTest()
         {
             using (var context = ZContext.Create())
             {
                 var server = new Thread(() => WeatherUpdate.WUServer(context));
                 server.Start();
-                Thread.Sleep(1000);
+                Thread.Sleep(AppSetting.WAITINGMS);
 
                 var proxy = new Thread(() => WeatherUpdateProxy.WUProxy());
                 proxy.Start();
-                Thread.Sleep(1000);
+                Thread.Sleep(AppSetting.WAITINGMS);
 
                 int numOfClients = 6;
                 var clients = new List<Thread>(numOfClients);
@@ -227,6 +240,7 @@ namespace ZeroMQTest.ConsoleUI
             }
         }
 
+        [TraceAspect]
         static void ParallelTaskWithKillTest()
         {
             using (var context = ZContext.Create())
@@ -255,6 +269,7 @@ namespace ZeroMQTest.ConsoleUI
             }
         }
 
+        [TraceAspect]
         static void HandlingInterruptSignalsTest()
         {
             using (var context = ZContext.Create())
@@ -270,6 +285,7 @@ namespace ZeroMQTest.ConsoleUI
             }
         }
 
+        [TraceAspect]
         static void MultithreadedServiceTest()
         {
             using (var context = ZContext.Create())
@@ -283,6 +299,7 @@ namespace ZeroMQTest.ConsoleUI
             }
         }
 
+        [TraceAspect]
         static void MultithreadedRelayTest()
         {
             var thread = new Thread(() => MultithreadedRelay.MTRelay_step3());
@@ -290,6 +307,7 @@ namespace ZeroMQTest.ConsoleUI
             thread.Start();
         }
 
+        [TraceAspect]
         static void NodeCoordinationTest()
         {
             int numOfSubscribers = 10;
@@ -307,6 +325,7 @@ namespace ZeroMQTest.ConsoleUI
             }
         }
 
+        [TraceAspect]
         static void PubSubEnvelopeTest()
         {
             var publisher = new Thread(() =>
@@ -329,6 +348,7 @@ namespace ZeroMQTest.ConsoleUI
             }
         }
 
+        [TraceAspect]
         static void RouterReqTest()
         {
             int numOfWorkers = 10;
@@ -340,7 +360,7 @@ namespace ZeroMQTest.ConsoleUI
             broker.Name = "Broker";
             broker.Start();
 
-            Thread.Sleep(10);
+            Thread.Sleep(AppSetting.WAITINGMS);
 
             var workers = new List<Thread>(numOfWorkers);
             for (int i = 0; i < numOfWorkers; i++)
@@ -352,7 +372,7 @@ namespace ZeroMQTest.ConsoleUI
                 worker.Name = "Worker " + i;
                 worker.Start();
 
-                Thread.Sleep(10);
+                Thread.Sleep(AppSetting.WAITINGMS);
             }
 
             broker.Join();
@@ -363,9 +383,10 @@ namespace ZeroMQTest.ConsoleUI
             }
         }
 
+        [TraceAspect]
         static void RouterDealerTest()
         {
-            int numOfDealers = 4;
+            int numOfDealers = 10;
 
             var broker = new Thread(() =>
             {
@@ -374,7 +395,7 @@ namespace ZeroMQTest.ConsoleUI
             broker.Name = "Broker";
             broker.Start();
 
-            Thread.Sleep(10);
+            Thread.Sleep(AppSetting.WAITINGMS);
 
             var workers = new List<Thread>(numOfDealers);
             for (int i = 0; i < numOfDealers; i++)
@@ -386,17 +407,77 @@ namespace ZeroMQTest.ConsoleUI
                 worker.Name = "Dealer " + i;
                 worker.Start();
 
-                Thread.Sleep(10);
+                Thread.Sleep(AppSetting.WAITINGMS);
             }
 
             foreach (var worker in workers)
             {
                 worker.Join();
-                LogService.Debug(string.Format("{0}: done.", worker.Name));
+                LogService.Debug("{0}: done.", worker.Name);
             }
 
             broker.Join();
-            LogService.Debug(string.Format("{0}: done.", broker.Name));
+            LogService.Debug("{0}: done.", broker.Name);
+        }
+
+        [TraceAspect]
+        static void LBBrokerTest()
+        {
+            int numOfClients = 10;
+            int numofWorkers = 3;
+
+            // broker
+            var broker = new Thread(() =>
+            {
+                LBBroker.LBBroker_Broker(numOfClients);
+            });
+            broker.Name = "Broker";
+            broker.Start();
+
+            Thread.Sleep(AppSetting.WAITINGMS);
+
+            // workers
+            var workers = new List<Thread>(numofWorkers);
+            for (int i = 0; i < numofWorkers; i++)
+            {
+                var worker = new Thread(() =>
+                {
+                    LBBroker.LBBroker_Worker(i);
+                });
+                worker.Name = "Worker " + i;
+                worker.Start();
+
+                Thread.Sleep(AppSetting.WAITINGMS);
+            }
+
+            // clients
+            var clients = new List<Thread>(numOfClients);
+            for (int i = 0; i < numOfClients; i++)
+            {
+                var worker = new Thread(() =>
+                {
+                    LBBroker.LBBroker_Client(i);
+                });
+                worker.Name = "Client " + i;
+                worker.Start();
+
+                Thread.Sleep(AppSetting.WAITINGMS);
+            }
+
+            foreach (var worker in workers)
+            {
+                worker.Join();
+                LogService.Debug("{0}: done.", worker.Name);
+            }
+
+            foreach (var client in clients)
+            {
+                client.Join();
+                LogService.Debug("{0}: done.", client.Name);
+            }
+
+            broker.Join();
+            LogService.Debug("{0}: done.", broker.Name);
         }
     }
 }

@@ -50,11 +50,11 @@ namespace ZeroMQTest.Common.Patterns
                         total_msec += workload;
                         byte[] action = BitConverter.GetBytes(workload);
 
-                        LogService.Debug(string.Format("Vent: Workload {0}", workload));
+                        LogService.Debug("Vent: Workload {0}", workload);
                         sender.Send(action, 0, action.Length);
                     }
 
-                    LogService.Debug(string.Format("Vent: Total expected cost: {0} ms", total_msec));
+                    LogService.Debug("Vent: Total expected cost: {0} ms", total_msec);
                 }
             }
         }
@@ -78,7 +78,7 @@ namespace ZeroMQTest.Common.Patterns
                         var replyBytes = new byte[length];
                         receiver.ReceiveBytes(replyBytes, 0, replyBytes.Length);
                         int workload = BitConverter.ToInt32(replyBytes, 0);
-                        LogService.Info(string.Format("{0}: {1}.", Thread.CurrentThread.Name, workload));   // Show progress
+                        LogService.Info("{0}: {1}.", Thread.CurrentThread.Name, workload);   // Show progress
 
                         Thread.Sleep(workload); // Do the work
 
@@ -119,7 +119,7 @@ namespace ZeroMQTest.Common.Patterns
 
                 // Calculate and report duration of batch
                 stopwatch.Stop();
-                LogService.Info(string.Format("Total elapsed time: {0} ms", stopwatch.ElapsedMilliseconds));
+                LogService.Info("Total elapsed time: {0} ms", stopwatch.ElapsedMilliseconds);
             }
         }
     }

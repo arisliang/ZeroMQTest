@@ -65,8 +65,6 @@ namespace ZeroMQTest.Common.Patterns
 
     public static class MultipleSocketPoller
     {
-        static int POLLMS = 64;
-
         public static void MSPoller(ZContext context,
             string taskVentConnectAddress = "tcp://127.0.0.1:5557",
             string wuConnectAddress = "tcp://127.0.0.1:5556")
@@ -87,9 +85,10 @@ namespace ZeroMQTest.Common.Patterns
                     // Process messages from both sockets
                     ZError error = null;
                     ZMessage msg = null;
+
                     while (Thread.CurrentThread.IsAlive)
                     {
-                        if (receiver.PollIn(poll, out msg, out error, TimeSpan.FromMilliseconds(POLLMS)))
+                        if (receiver.PollIn(poll, out msg, out error, TimeSpan.FromMilliseconds(AppSetting.POLLMS)))
                         {
                             // Process task
                         }
@@ -99,7 +98,7 @@ namespace ZeroMQTest.Common.Patterns
                             if (error != ZError.EAGAIN) throw new ZException(error);
                         }
 
-                        if (subscriber.PollIn(poll, out msg, out error, TimeSpan.FromMilliseconds(POLLMS)))
+                        if (subscriber.PollIn(poll, out msg, out error, TimeSpan.FromMilliseconds(AppSetting.POLLMS)))
                         {
                             // Process weather update
                         }

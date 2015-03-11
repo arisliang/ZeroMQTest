@@ -17,12 +17,12 @@ namespace ZeroMQTest.Common.Patterns
             {
                 using (var frontend = ZSocket.Create(context, ZSocketType.ROUTER))
                 {
-                    LogService.Debug(string.Format("{0}: frontend binding on {1}.", Thread.CurrentThread.Name, frontEndBindAddress));
+                    LogService.Debug("{0}: frontend binding on {1}.", Thread.CurrentThread.Name, frontEndBindAddress);
                     frontend.Bind(frontEndBindAddress);
 
                     using (var backend = ZSocket.Create(context, ZSocketType.DEALER))
                     {
-                        LogService.Debug(string.Format("{0}: backend binding on {1}.", Thread.CurrentThread.Name, backendBindAddress));
+                        LogService.Debug("{0}: backend binding on {1}.", Thread.CurrentThread.Name, backendBindAddress);
                         backend.Bind(backendBindAddress);
 
                         // Start the proxy

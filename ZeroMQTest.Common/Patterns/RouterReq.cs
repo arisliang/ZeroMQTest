@@ -19,15 +19,16 @@ namespace ZeroMQTest.Common.Patterns
             {
                 using (var broker = ZSocket.Create(context, ZSocketType.ROUTER))
                 {
-                    LogService.Trace(string.Format("{0}: binding on {1}", Thread.CurrentThread.Name, brokerBindAddress));
+                    LogService.Trace("{0}: binding on {1}", Thread.CurrentThread.Name, brokerBindAddress);
                     broker.Bind(brokerBindAddress);
+                    broker.SetOption(ZSocketOption.ROUTER_MANDATORY, 1);
 
                     var stopwatch = new Stopwatch();
                     stopwatch.Start();
 
                     // Run for five seconds and then tell workers to end
                     int workers_fired = 0;
-                    LogService.Debug(string.Format("{0}: Just hired {1} worker(s).", Thread.CurrentThread.Name, numOfWorkers));
+                    LogService.Debug("{0}: Just hired {1} worker(s).", Thread.CurrentThread.Name, numOfWorkers);
                     while (true)
                     {
                         // Next message gives us least recently used worker
@@ -54,7 +55,7 @@ namespace ZeroMQTest.Common.Patterns
                                 broker.Send(new ZFrame("Fired!"));  // data frame
                                 if (++workers_fired == numOfWorkers)
                                 {
-                                    LogService.Warn(string.Format("{0}: No more work everybody!", Thread.CurrentThread.Name));
+                                    LogService.Warn("{0}: No more work everybody!", Thread.CurrentThread.Name);
                                     break;
                                 }
                             }
@@ -70,7 +71,7 @@ namespace ZeroMQTest.Common.Patterns
             {
                 using (var worker = ZSocket.Create(context, ZSocketType.REQ))
                 {
-                    LogService.Trace(string.Format("{0}: connecting to {1}.", Thread.CurrentThread.Name, workConnectAddress));
+                    LogService.Trace("{0}: connecting to {1}.", Thread.CurrentThread.Name, workConnectAddress);
                     worker.IdentityString = "PEER " + i;
                     worker.Connect(workConnectAddress);
 
@@ -80,32 +81,32 @@ namespace ZeroMQTest.Common.Patterns
                     while (true)
                     {
                         // Tell the broker we're ready for work
-                        LogService.Info(string.Format("{0}: Hey boss, I'm free.", Thread.CurrentThread.Name));
+                        LogService.Info("{0}: Hey boss, I'm free.", Thread.CurrentThread.Name);
                         worker.Send(new ZFrame("Hi Boss"));
 
                         // Get workload from broker, until finished
                         bool finished = false;
-                        LogService.Debug(string.Format("{0}: waiting for reply.", Thread.CurrentThread.Name));
+                        LogService.Debug("{0}: waiting for reply.", Thread.CurrentThread.Name);
                         using (ZFrame frame = worker.ReceiveFrame())
                         {
                             string message = frame.ReadString();
-                            LogService.Debug(string.Format("{0}: Boss said {1}", Thread.CurrentThread.Name, message));
+                            LogService.Debug("{0}: Boss said {1}", Thread.CurrentThread.Name, message);
                             finished = (message == "Fired!");
                         }
                         if (finished)
                         {
-                            LogService.Warn(string.Format("{0}: Time to leave.", Thread.CurrentThread.Name));
+                            LogService.Warn("{0}: Time to leave.", Thread.CurrentThread.Name);
                             break;
                         }
 
                         total++;
 
                         // Do some random work
-                        LogService.Info(string.Format("{0}: doing some work!", Thread.CurrentThread.Name));
+                        LogService.Info("{0}: doing some work!", Thread.CurrentThread.Name);
                         Thread.Sleep(rnd.Next(0, 1000));
                     }
 
-                    LogService.Info(string.Format("Completed: {0}, {1} tasks", worker.IdentityString, total));
+                    LogService.Info("Completed: {0}, {1} tasks", worker.IdentityString, total);
                 }
             }
         }

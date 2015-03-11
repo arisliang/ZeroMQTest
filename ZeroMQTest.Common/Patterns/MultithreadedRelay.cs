@@ -27,7 +27,7 @@ namespace ZeroMQTest.Common.Patterns
                     // Wait for signal
                     receiver.ReceiveFrame();
 
-                    LogService.Info(string.Format("{0}: Ready, Test successful!", Thread.CurrentThread.Name));
+                    LogService.Info("{0}: Ready, Test successful!", Thread.CurrentThread.Name);
                 }
             }
         }
@@ -52,7 +52,7 @@ namespace ZeroMQTest.Common.Patterns
             {
                 xmitter.Connect("inproc://step3");
 
-                LogService.Info(string.Format("{0}: Ready, signaling step 3", Thread.CurrentThread.Name));
+                LogService.Info("{0}: Ready, signaling step 3", Thread.CurrentThread.Name);
                 xmitter.Send(new ZFrame("READY"));
             }
         }
@@ -64,7 +64,7 @@ namespace ZeroMQTest.Common.Patterns
             {
                 xmitter.Connect("inproc://step2");
 
-                LogService.Info(string.Format("{0}: Ready, signaling step 2", Thread.CurrentThread.Name));
+                LogService.Info("{0}: Ready, signaling step 2", Thread.CurrentThread.Name);
                 xmitter.Send(new ZFrame("READY"));
             }
         }

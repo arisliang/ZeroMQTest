@@ -56,8 +56,8 @@ namespace ZeroMQTest.Common.Patterns
 
                         using (request)
                         {
-                            LogService.Debug(string.Format("Responder: Received: {0}!", request.ReadString()));
-                            LogService.Info(string.Format("Responder: Sending {0}...", name));
+                            LogService.Debug("Responder: Received: {0}!", request.ReadString());
+                            LogService.Info("Responder: Sending {0}...", name);
                             using (var response = new ZFrame(name))
                             {
                                 if (!responder.Send(response, out error))

@@ -18,8 +18,6 @@ namespace ZeroMQTest.Common.Patterns
     {
         static int _NumberOfTasks = 100;
 
-        static int POLLMS = 64;
-
         public static void TaskVent(ZContext context, string taskVentBindAddress = "tcp://*:5557", string taskSinkConnectAddress = "tcp://127.0.0.1:5558")
         {
             Contract.Requires(context != null);
@@ -52,11 +50,11 @@ namespace ZeroMQTest.Common.Patterns
                         total_msec += workload;
                         byte[] action = BitConverter.GetBytes(workload);
 
-                        LogService.Debug(string.Format("Vent: Workload {0}", workload));
+                        LogService.Debug("Vent: Workload {0}", workload);
                         sender.Send(action, 0, action.Length);
                     }
 
-                    LogService.Debug(string.Format("Vent: Total expected cost: {0} ms", total_msec));
+                    LogService.Debug("Vent: Total expected cost: {0} ms", total_msec);
                 }
             }
         }
@@ -87,16 +85,16 @@ namespace ZeroMQTest.Common.Patterns
                         // Process tasks forever
                         while (Thread.CurrentThread.IsAlive)
                         {
-                            if (receiver.PollIn(poll, out message, out error, TimeSpan.FromMilliseconds(POLLMS)))
+                            if (receiver.PollIn(poll, out message, out error, TimeSpan.FromMilliseconds(AppSetting.POLLMS)))
                             {
                                 int workload = message[0].ReadInt32();
-                                LogService.Info(string.Format("{0}: {1}.", Thread.CurrentThread.Name, workload));   // Show progress
+                                LogService.Info("{0}: {1}.", Thread.CurrentThread.Name, workload);   // Show progress
                                 Thread.Sleep(workload); // Do the work
                                 sink.Send(new byte[0], 0, 0);   // Send results to sink
                             }
 
                             // Any waiting controller command acts as 'KILL'
-                            if (controller.PollIn(poll, out message, out error, TimeSpan.FromMilliseconds(POLLMS)))
+                            if (controller.PollIn(poll, out message, out error, TimeSpan.FromMilliseconds(AppSetting.POLLMS)))
                             {
                                 break;  // Exit loop
                             }

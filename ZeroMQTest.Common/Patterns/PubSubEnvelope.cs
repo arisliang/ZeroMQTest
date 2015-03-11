@@ -61,7 +61,7 @@ namespace ZeroMQTest.Common.Patterns
                             // Read message contents
                             string contents = message[1].ReadString();
 
-                            LogService.Info(string.Format("[{0}]: {1} {2}", Thread.CurrentThread.Name, address, contents));
+                            LogService.Info("[{0}]: {1} {2}", Thread.CurrentThread.Name, address, contents);
                         }
                     }
                 }

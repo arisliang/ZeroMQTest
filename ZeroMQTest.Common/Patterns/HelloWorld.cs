@@ -22,13 +22,13 @@ namespace ZeroMQTest.Common.Patterns
             using (var requester = ZSocket.Create(context, ZSocketType.REQ))
             {
                 // Connect
-                LogService.Debug(string.Format("{0}: client connecting on {1}.", Thread.CurrentThread.Name, address));
+                LogService.Debug("{0}: client connecting on {1}.", Thread.CurrentThread.Name, address);
                 requester.Connect(address);
 
                 for (int n = 0; n < 10; ++n)
                 {
                     string requestText = string.Format("[{0}] Hello", n);
-                    LogService.Debug(string.Format("{0}: Sending {1}...", Thread.CurrentThread.Name, requestText));
+                    LogService.Debug("{0}: Sending {1}...", Thread.CurrentThread.Name, requestText);
 
                     // Send
                     using (var request = new ZFrame(requestText))
@@ -39,7 +39,7 @@ namespace ZeroMQTest.Common.Patterns
                     // Receive
                     using (var reply = requester.ReceiveFrame())
                     {
-                        LogService.Info(string.Format("{0}: Received: {1} {2}!", Thread.CurrentThread.Name, requestText, reply.ReadString()));
+                        LogService.Info("{0}: Received: {1} {2}!", Thread.CurrentThread.Name, requestText, reply.ReadString());
                     }
                 }
             }
@@ -54,12 +54,12 @@ namespace ZeroMQTest.Common.Patterns
                 // Bind or connect via broker
                 if (address.Contains('*'))
                 {
-                    LogService.Debug(string.Format("{0}: Responder binding on {1}", Thread.CurrentThread.Name, address));
+                    LogService.Debug("{0}: Responder binding on {1}", Thread.CurrentThread.Name, address);
                     responder.Bind(address);
                 }
                 else
                 {
-                    LogService.Debug(string.Format("{0}: Responder connecting on {1}", Thread.CurrentThread.Name, address));
+                    LogService.Debug("{0}: Responder connecting on {1}", Thread.CurrentThread.Name, address);
                     responder.Connect(address);
                 }
 
@@ -69,14 +69,14 @@ namespace ZeroMQTest.Common.Patterns
                     // Wait for next request from client
                     using (ZFrame request = responder.ReceiveFrame())
                     {
-                        LogService.Info(string.Format("{0}: {1} ", Thread.CurrentThread.Name, request.ReadString()));
+                        LogService.Info("{0}: {1} ", Thread.CurrentThread.Name, request.ReadString());
                     }
 
                     // Do some 'work'
                     Thread.Sleep(1);
 
                     // Send reply back to client
-                    LogService.Info(string.Format("{0}: {1}… ", Thread.CurrentThread.Name, name));
+                    LogService.Info("{0}: {1}… ", Thread.CurrentThread.Name, name);
                     using (var reply = new ZFrame(name))
                     {
                         responder.Send(reply);

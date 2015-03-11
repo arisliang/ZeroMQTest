@@ -22,10 +22,10 @@ namespace ZeroMQTest.Common.Patterns
 
             using (var subscriber = ZSocket.Create(context, ZSocketType.SUB))
             {
-                LogService.Debug(string.Format("{0}: Connecting to {1}...", Thread.CurrentThread.Name, address));
+                LogService.Debug("{0}: Connecting to {1}...", Thread.CurrentThread.Name, address);
                 subscriber.Connect(address);
 
-                LogService.Debug(string.Format("{0}: Subscribing to zip code {1}...", Thread.CurrentThread.Name, zipcode));
+                LogService.Debug("{0}: Subscribing to zip code {1}...", Thread.CurrentThread.Name, zipcode);
                 subscriber.Subscribe(zipcode.ToString());
 
                 int i = 0;
@@ -36,11 +36,11 @@ namespace ZeroMQTest.Common.Patterns
                     {
                         string reply = replyFrame.ReadString();
 
-                        LogService.Info(string.Format("{0}: {1}", Thread.CurrentThread.Name, reply));
+                        LogService.Info("{0}: {1}", Thread.CurrentThread.Name, reply);
                         total_temperature += Convert.ToInt64(reply.Split(' ')[1]);
                     }
                 }
-                LogService.Info(string.Format("{0}: Average temperature for zipcode '{1}' was {2}°", Thread.CurrentThread.Name, zipcode, (total_temperature / i)));
+                LogService.Info("{0}: Average temperature for zipcode '{1}' was {2}°", Thread.CurrentThread.Name, zipcode, (total_temperature / i));
             }
         }
 
@@ -50,7 +50,7 @@ namespace ZeroMQTest.Common.Patterns
 
             using (var publisher = ZSocket.Create(context, ZSocketType.PUB))
             {
-                LogService.Debug(string.Format("Server: Publisher.Bind'ing on {0}", address));
+                LogService.Debug("Server: Publisher.Bind'ing on {0}", address);
                 publisher.Bind(address);
 
                 LogService.Debug("Press ENTER when the clients are ready...");

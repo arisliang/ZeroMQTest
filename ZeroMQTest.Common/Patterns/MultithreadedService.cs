@@ -49,14 +49,14 @@ namespace ZeroMQTest.Common.Patterns
                 {
                     using (ZFrame frame = server.ReceiveFrame())
                     {
-                        LogService.Debug(string.Format("{0}: Worker received {1}", Thread.CurrentThread.Name, frame.ReadString()));
+                        LogService.Debug("{0}: Worker received {1}", Thread.CurrentThread.Name, frame.ReadString());
 
                         // Do some 'work'
                         Thread.Sleep(1);
 
                         // Send reply back to client
                         string replyText = "World";
-                        LogService.Debug(string.Format("{0}: Sending {1}", Thread.CurrentThread.Name, replyText));
+                        LogService.Debug("{0}: Sending {1}", Thread.CurrentThread.Name, replyText);
                         server.Send(new ZFrame(replyText));
                     }
                 }
