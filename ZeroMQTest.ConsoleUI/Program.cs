@@ -426,58 +426,61 @@ namespace ZeroMQTest.ConsoleUI
             int numOfClients = 10;
             int numofWorkers = 3;
 
-            // broker
-            var broker = new Thread(() =>
+            using (var context = ZContext.Create())
             {
-                LBBroker.LBBroker_Broker(numOfClients);
-            });
-            broker.Name = "Broker";
-            broker.Start();
-
-            Thread.Sleep(AppSetting.WAITINGMS);
-
-            // workers
-            var workers = new List<Thread>(numofWorkers);
-            for (int i = 0; i < numofWorkers; i++)
-            {
-                var worker = new Thread(() =>
+                // broker
+                var broker = new Thread(() =>
                 {
-                    LBBroker.LBBroker_Worker(i);
+                    LBBroker.LBBroker_Broker(context, numOfClients);
                 });
-                worker.Name = "Worker " + i;
-                worker.Start();
+                broker.Name = "Broker";
+                broker.Start();
 
                 Thread.Sleep(AppSetting.WAITINGMS);
-            }
 
-            // clients
-            var clients = new List<Thread>(numOfClients);
-            for (int i = 0; i < numOfClients; i++)
-            {
-                var worker = new Thread(() =>
+                // workers
+                var workers = new List<Thread>(numofWorkers);
+                for (int i = 0; i < numofWorkers; i++)
                 {
-                    LBBroker.LBBroker_Client(i);
-                });
-                worker.Name = "Client " + i;
-                worker.Start();
+                    var worker = new Thread(() =>
+                    {
+                        LBBroker.LBBroker_Worker(context, i);
+                    });
+                    worker.Name = "Worker " + i;
+                    worker.Start();
 
-                Thread.Sleep(AppSetting.WAITINGMS);
+                    Thread.Sleep(AppSetting.WAITINGMS);
+                }
+
+                // clients
+                var clients = new List<Thread>(numOfClients);
+                for (int i = 0; i < numOfClients; i++)
+                {
+                    var worker = new Thread(() =>
+                    {
+                        LBBroker.LBBroker_Client(context, i);
+                    });
+                    worker.Name = "Client " + i;
+                    worker.Start();
+
+                    Thread.Sleep(AppSetting.WAITINGMS);
+                }
+
+                foreach (var worker in workers)
+                {
+                    worker.Join();
+                    LogService.Debug("{0}: done.", worker.Name);
+                }
+
+                foreach (var client in clients)
+                {
+                    client.Join();
+                    LogService.Debug("{0}: done.", client.Name);
+                }
+
+                broker.Join();
+                LogService.Debug("{0}: done.", broker.Name);
             }
-
-            foreach (var worker in workers)
-            {
-                worker.Join();
-                LogService.Debug("{0}: done.", worker.Name);
-            }
-
-            foreach (var client in clients)
-            {
-                client.Join();
-                LogService.Debug("{0}: done.", client.Name);
-            }
-
-            broker.Join();
-            LogService.Debug("{0}: done.", broker.Name);
         }
     }
 }
