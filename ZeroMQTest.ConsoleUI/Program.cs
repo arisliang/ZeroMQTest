@@ -35,7 +35,8 @@ namespace ZeroMQTest.ConsoleUI
                 //PubSubEnvelopeTest();
                 //RouterReqTest();
                 //RouterDealerTest();
-                LBBrokerTest();
+                //LBBrokerTest();
+                AsyncSrvTest();
             }
             catch (ZException ex)
             {
@@ -480,6 +481,41 @@ namespace ZeroMQTest.ConsoleUI
 
                 broker.Join();
                 LogService.Debug("{0}: done.", broker.Name);
+            }
+        }
+
+        [TraceAspect]
+        static void AsyncSrvTest()
+        {
+            // The main thread simply starts several clients and a server, and then
+            // waits for the server to finish.
+            using (var context = ZContext.Create())
+            {
+                int numOfClients = 5;
+                for (int i = 0; i < numOfClients; i++)
+                {
+                    var client = new Thread(() => AsyncServer.AsyncSrv_Client(context, i));
+                    client.Name = "CLIENT " + i;
+                    client.Start();
+                    Thread.Sleep(AppSetting.WAITINGMS);
+                }
+
+                var server = new Thread(() => AsyncServer.AsyncSrv_ServerTask(context));
+                server.Name = "SERVER";
+                server.Start();
+                Thread.Sleep(AppSetting.WAITINGMS);
+
+                int numOfWorkers = 5;
+                for (int i = 0; i < numOfWorkers; i++)
+                {
+                    var worker = new Thread(() => AsyncServer.AsyncSrv_ServerWorker(context, i));
+                    worker.Name = "WORKER " + i;
+                    worker.Start();
+                    Thread.Sleep(AppSetting.WAITINGMS);
+                }
+
+                // Run for 5 seconds then quit
+                Thread.Sleep(5 * 1000);
             }
         }
     }

@@ -10,11 +10,13 @@ namespace ZeroMQTest.Common
     {
         public static int POLLMS { get; private set; }
         public static int WAITINGMS { get; private set; }
+        public static int TICKS { get; private set; }
 
         static AppSetting()
         {
             POLLMS = System.Configuration.ConfigurationManager.AppSettings["POLLMS"].ToInt32OrDefault(64);
             WAITINGMS = System.Configuration.ConfigurationManager.AppSettings["WAITINGMS"].ToInt32OrDefault(1);
+            TICKS = System.Configuration.ConfigurationManager.AppSettings["TICKS"].ToInt32OrDefault(100);
         }
     }
 }
