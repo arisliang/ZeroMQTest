@@ -17,6 +17,6 @@ namespace ZeroMQTest.Common
             POLLMS = System.Configuration.ConfigurationManager.AppSettings["POLLMS"].ToInt32OrDefault(64);
             WAITINGMS = System.Configuration.ConfigurationManager.AppSettings["WAITINGMS"].ToInt32OrDefault(1);
             TICKS = System.Configuration.ConfigurationManager.AppSettings["TICKS"].ToInt32OrDefault(100);
-        }
+        }        
     }
 }
