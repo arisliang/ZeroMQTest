@@ -538,5 +538,13 @@ namespace ZeroMQTest.ConsoleUI
                 Thread.Sleep(1000);
             }
         }
+
+        private static void Peer2Test()
+        {
+            int Peering2_Clients = 10;
+            int Peering2_Workers = 3;
+
+            
+        }
     }
 }

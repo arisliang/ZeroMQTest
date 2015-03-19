@@ -94,6 +94,7 @@
     <Compile Include="Patterns\MultipleSocket.cs" />
     <Compile Include="Patterns\ParallelTask.cs" />
     <Compile Include="Patterns\Peer1.cs" />
+    <Compile Include="Patterns\Peer2.cs" />
     <Compile Include="Patterns\PubSubEnvelope.cs" />
     <Compile Include="Patterns\RequestReply.cs" />
     <Compile Include="Patterns\RouterDealer.cs" />
