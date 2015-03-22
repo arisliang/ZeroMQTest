@@ -120,69 +120,239 @@ namespace ZeroMQTest.Common.Patterns
         /// The main task begins by setting-up its frontend and backend sockets
         /// and then starting its client and worker tasks:
         /// </summary>
-        /// <param name="context"></param>
-        public static void Peering2(ZContext context, string brokerName, string[] peerNames, int numOfWorkers,
+        /// <param name="selfName"></param>
+        /// <param name="message">Client's task request message</param>
+        /// <param name="peerNames"></param>
+        /// <param name="numOfWorkers"></param>
+        /// <param name="numOfClients"></param>
+        /// <param name="cloudFrontendBindBaseAddress"></param>
+        /// <param name="cloudBackendConnectBaseAddress"></param>
+        /// <param name="localFrontendBindBaseAddress"></param>
+        /// <param name="localBackendBindBaseAddress"></param>
+        public static void Peering2(string selfName, string message, string[] peerNames, int numOfWorkers, int numOfClients,
             string cloudFrontendBindBaseAddress = "tcp://127.0.0.1:", string cloudBackendConnectBaseAddress = "tcp://127.0.0.1:",
             string localFrontendBindBaseAddress = "tcp://127.0.0.1:", string localBackendBindBaseAddress = "tcp://127.0.0.1:")
         {
-            Contract.Requires(context != null);
-            LogService.Trace("{0}: preparing broker as {1}", Thread.CurrentThread.Name, brokerName);
+            LogService.Trace("{0}: preparing broker as {1}", Thread.CurrentThread.Name, selfName);
 
-            using (var cloudFrontend = ZSocket.Create(context, ZSocketType.ROUTER))
+            using (var context = ZContext.Create())
             {
-                using (var cloudBackend = ZSocket.Create(context, ZSocketType.ROUTER))
+                using (var cloudFrontend = ZSocket.Create(context, ZSocketType.ROUTER))
                 {
-                    using (var localFrontend = ZSocket.Create(context, ZSocketType.ROUTER))
+                    using (var cloudBackend = ZSocket.Create(context, ZSocketType.ROUTER))
                     {
-                        using (var localBackend = ZSocket.Create(context, ZSocketType.ROUTER))
+                        using (var localFrontend = ZSocket.Create(context, ZSocketType.ROUTER))
                         {
-                            // Bind cloud frontend to endpoint
-                            cloudFrontend.IdentityString = brokerName;
+                            using (var localBackend = ZSocket.Create(context, ZSocketType.ROUTER))
                             {
-                                string ep = cloudFrontendBindBaseAddress + Peering2_GetPort(brokerName) + 0;
-                                cloudFrontend.Bind(ep);
-                                LogService.Trace("{0}: cloud frontend of broker {1} binded on {2}.", Thread.CurrentThread.Name, brokerName, ep);
-                            }
-
-
-                            // Connect cloud backend to all peers
-                            cloudBackend.IdentityString = brokerName;
-                            for (int i = 0; i < peerNames.Length; i++)
-                            {
-                                string peer = peerNames[i];
+                                // Bind cloud frontend to endpoint
+                                cloudFrontend.IdentityString = selfName;
                                 {
-                                    string ep = cloudBackendConnectBaseAddress + Peering2_GetPort(peer) + 0;
-                                    LogService.Trace("{0}: cloud backend of broker {1} connecting to cloud frontend of broker peer {2} at {3}.",
-                                        Thread.CurrentThread.Name, brokerName, peer, ep);
-                                    cloudBackend.Connect(ep);
+                                    string ep = cloudFrontendBindBaseAddress + Peering2_GetPort(selfName) + 0;
+                                    cloudFrontend.Bind(ep);
+                                    LogService.Trace("{0}: cloud frontend of broker {1} binded on {2}.", Thread.CurrentThread.Name, selfName, ep);
                                 }
-                            }
 
-                            // Prepare local frontend and backend
-                            {
-                                string ep = localFrontendBindBaseAddress + Peering2_GetPort(brokerName) + 1;
-                                localFrontend.Bind(ep);
-                                LogService.Trace("{0}: local frontend of broker {1} binded on {2}.", Thread.CurrentThread.Name, brokerName, ep);
-                            }
-                            {
-                                string ep = localBackendBindBaseAddress + Peering2_GetPort(brokerName) + 2;
-                                localBackend.Bind(ep);
-                                LogService.Trace("{0}: local backend of broker {1} binded on {2}.", Thread.CurrentThread.Name, brokerName, ep);
-                            }
 
-                            // Get user to tell us when we can start…
-                            LogService.Warn("Press ENTER when all brokers are started...");
-                            Console.ReadKey(true);
+                                // Connect cloud backend to all peers
+                                cloudBackend.IdentityString = selfName;
+                                for (int i = 0; i < peerNames.Length; i++)
+                                {
+                                    string peer = peerNames[i];
+                                    {
+                                        string ep = cloudBackendConnectBaseAddress + Peering2_GetPort(peer) + 0;
+                                        LogService.Trace("{0}: cloud backend of broker {1} connecting to cloud frontend of broker peer {2} at {3}.",
+                                            Thread.CurrentThread.Name, selfName, peer, ep);
+                                        cloudBackend.Connect(ep);
+                                    }
+                                }
 
-                            // Start local workers
-                            for (int i = 0; i < numOfWorkers; i++)
-                            {
+                                // Prepare local frontend and backend
+                                {
+                                    string ep = localFrontendBindBaseAddress + Peering2_GetPort(selfName) + 1;
+                                    localFrontend.Bind(ep);
+                                    LogService.Trace("{0}: local frontend of broker {1} binded on {2}.", Thread.CurrentThread.Name, selfName, ep);
+                                }
+                                {
+                                    string ep = localBackendBindBaseAddress + Peering2_GetPort(selfName) + 2;
+                                    localBackend.Bind(ep);
+                                    LogService.Trace("{0}: local backend of broker {1} binded on {2}.", Thread.CurrentThread.Name, selfName, ep);
+                                }
 
+                                // Get user to tell us when we can start…
+                                LogService.Warn("Press ENTER when all brokers are started...");
+                                Console.ReadKey(true);
+
+                                // Start local workers
+                                for (int i = 0; i < numOfWorkers; i++)
+                                {
+                                    Thread worker = new Thread(() =>
+                                    {
+                                        Peering2_WorkerTask(context, i, selfName);
+                                    });
+                                    worker.Start();
+                                }
+
+                                // Start local clients
+                                for (int i = 0; i < numOfClients; i++)
+                                {
+                                    Thread client = new Thread(() =>
+                                    {
+                                        Peering2_ClientTask(context, i, selfName, message);
+                                    });
+                                    client.Start();
+                                }
+
+                                // Here, we handle the request-reply flow. We're using load-balancing
+                                // to poll workers at all times, and clients only when there are one
+                                // or more workers available.
+
+                                // Least recently used queue of available workers
+                                var workers = new Queue<string>();
+
+                                ZError error = null;
+                                ZMessage incoming = null;
+                                TimeSpan? wait;
+                                var poll = ZPollItem.CreateReceiver();
+                                int GotWorkerWaitMs = 1000;
+
+                                while (true)
+                                {
+                                    // If we have no workers, wait indefinitely
+                                    wait = workers.Count > 0 ? (TimeSpan?)TimeSpan.FromMilliseconds(GotWorkerWaitMs) : null;
+
+                                    // Poll localBackend
+                                    if (localBackend.PollIn(poll, out incoming, out error, wait))
+                                    {
+                                        // Handle reply from local worker
+                                        string identity = incoming[0].ReadString();
+                                        workers.Enqueue(identity);
+
+                                        // If it's READY, don't route the message any further
+                                        string hello = incoming[2].ReadString();
+                                        if (hello == "READY")
+                                        {
+                                            incoming.Dispose();
+                                            incoming = null;
+                                        }
+                                    }
+                                    else if (error == ZError.EAGAIN && cloudBackend.PollIn(poll, out incoming, out error, wait))
+                                    {
+                                        // We don't use peer broker identity for anything
+
+                                        // string identity = incoming[0].ReadString();
+
+                                        // string ok = incoming[2].ReadString();
+                                    }
+                                    else
+                                    {
+                                        if (error == ZError.ETERM) return;    // Interrupted
+
+                                        if (error != ZError.EAGAIN) throw new ZException(error);
+                                    }
+
+                                    if (incoming != null)
+                                    {
+                                        string identity = incoming[0].ReadString();
+
+                                        var isForCloud = (from cloud in peerNames
+                                                          where cloud.Equals(identity, StringComparison.OrdinalIgnoreCase)
+                                                          select cloud).Any();
+
+                                        using (incoming)
+                                        {
+                                            if (isForCloud)
+                                            {
+                                                // Route reply to cloud if it's addressed to a broker
+                                                cloudFrontend.Send(incoming);
+                                            }
+                                            else
+                                            {
+                                                // Route reply to client if we still need to
+                                                localFrontend.Send(incoming);
+                                            }
+                                        }
+
+                                        incoming = null;
+                                    }
+
+                                    // Now we route as many client requests as we have worker capacity
+                                    // for. We may reroute requests from our local frontend, but not from //
+                                    // the cloud frontend. We reroute randomly now, just to test things
+                                    // out. In the next version, we'll do this properly by calculating
+                                    // cloud capacity://
+                                    var rnd = new Random();
+                                    bool reroutable = false;
+
+                                    while (workers.Count > 0)
+                                    {
+                                        // We'll do peer brokers first, to prevent starvation
+                                        if (localFrontend.PollIn(poll, out incoming, out error, TimeSpan.FromMilliseconds(AppSetting.POLLMS)))
+                                        {
+                                            reroutable = false;
+                                        }
+                                        else if (error == ZError.EAGAIN
+                                            && cloudFrontend.PollIn(poll, out incoming, out error, TimeSpan.FromMilliseconds(AppSetting.POLLMS)))
+                                        {
+                                            reroutable = true;
+                                        }
+                                        else
+                                        {
+                                            if (error == ZError.ETERM) return;    // Interrupted
+
+                                            if (error == ZError.EAGAIN) break;    // No work, go back to backends
+
+                                            throw new ZException(error);
+                                        }
+
+                                        using (incoming)
+                                        {
+                                            // If reroutable, send to cloud 25% of the time
+                                            // Here we'd normally use cloud status information
+
+                                            if (reroutable == true && rnd.Next(4) == 0)
+                                            {
+                                                // Route to random broker peer
+                                                int peer = rnd.Next(peerNames.Length - 2) + 2;
+                                                incoming.ReplaceAt(0, new ZFrame(peerNames[peer]));
+
+                                                /*using (var outgoing = new ZMessage())
+                                                {
+                                                    outgoing.Add(new ZFrame(args[peer]));
+                                                    outgoing.Add(new ZFrame());
+                                                    outgoing.Add(incoming[2]);
+
+                                                    cloudBackend.Send(outgoing);
+                                                }*/
+
+                                                cloudBackend.Send(incoming);
+                                            }
+                                            else
+                                            {
+                                                // Route to local broker peer
+                                                string peer = workers.Dequeue();
+                                                incoming.ReplaceAt(0, new ZFrame(peer));
+
+                                                /*using (var outgoing = new ZMessage())
+                                                {
+                                                    outgoing.Add(new ZFrame(peer));
+                                                    outgoing.Add(new ZFrame());
+                                                    outgoing.Add(incoming[2]);
+
+                                                    localBackend.Send(outgoing);
+                                                }*/
+
+                                                localBackend.Send(incoming);
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
                 }
             }
+
         }
 
         static Int16 Peering2_GetPort(string name)

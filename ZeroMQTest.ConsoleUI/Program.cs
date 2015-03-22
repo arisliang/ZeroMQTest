@@ -37,7 +37,8 @@ namespace ZeroMQTest.ConsoleUI
                 //RouterDealerTest();
                 //LBBrokerTest();
                 //AsyncSrvTest();
-                Peer1Test();
+                //Peer1Test();
+                Peer2Test();
             }
             catch (ZException ex)
             {
@@ -532,8 +533,9 @@ namespace ZeroMQTest.ConsoleUI
                     peers.Add("DC" + (j + 1) % numOfDCs);
                 }
 
-                var dc = new Thread(() => Peer1.Peering1("DC" + i, i, peers.ToArray()));
-                dc.Name = "DC" + i;
+                string dcName = "DC" + i;
+                var dc = new Thread(() => Peer1.Peering1(dcName, i, peers.ToArray()));
+                dc.Name = dcName;
                 dc.Start();
                 Thread.Sleep(1000);
             }
@@ -543,8 +545,26 @@ namespace ZeroMQTest.ConsoleUI
         {
             int Peering2_Clients = 10;
             int Peering2_Workers = 3;
+            int numOfDCs = 3;
+            string message = "TASK";
 
-            
+            for (int i = 0; i < numOfDCs; i++)
+            {
+                var peers = new HashSet<string>();
+                for (int j = i; j < numOfDCs + i - 1; j++)
+                {
+                    peers.Add("DC" + (j + 1) % numOfDCs);
+                }
+
+                string dcName = "DC" + i;
+                var dc = new Thread(() =>
+                {
+                    Peer2.Peering2(dcName, message, peers.ToArray(), Peering2_Workers, Peering2_Clients);
+                });
+                dc.Name = dcName;
+                dc.Start();
+                Thread.Sleep(1000);
+            }
         }
     }
 }
