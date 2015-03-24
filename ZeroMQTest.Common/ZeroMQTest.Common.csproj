@@ -84,6 +84,7 @@
     <Compile Include="AppSetting.cs" />
     <Compile Include="Patterns\AsyncServer.cs" />
     <Compile Include="Patterns\HandlingInterruptSignals.cs" />
+    <Compile Include="Patterns\LazyPiratePattern.cs" />
     <Compile Include="Patterns\LBBroker.cs" />
     <Compile Include="Patterns\MultithreadedRelay.cs" />
     <Compile Include="Patterns\MultithreadedService.cs" />

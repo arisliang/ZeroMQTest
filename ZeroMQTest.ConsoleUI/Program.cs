@@ -38,7 +38,8 @@ namespace ZeroMQTest.ConsoleUI
                 //LBBrokerTest();
                 //AsyncSrvTest();
                 //Peer1Test();
-                Peer2Test();
+                //Peer2Test();
+                LazyPiratePatternTest();
             }
             catch (ZException ex)
             {
@@ -541,6 +542,7 @@ namespace ZeroMQTest.ConsoleUI
             }
         }
 
+        [TraceAspect]
         private static void Peer2Test()
         {
             int Peering2_Clients = 10;
@@ -564,6 +566,36 @@ namespace ZeroMQTest.ConsoleUI
                 dc.Name = dcName;
                 dc.Start();
                 Thread.Sleep(1000);
+            }
+        }
+
+        [TraceAspect]
+        private static void LazyPiratePatternTest()
+        {
+            bool debug = false;
+            if (debug)
+            {
+                LazyPiratePattern.LazyPirateClient();
+                //LazyPiratePattern.LazyPirateServer();
+            }
+            else
+            {
+                Thread client = new Thread(() =>
+                {
+                    LazyPiratePattern.LazyPirateClient();
+                });
+                client.Start();
+
+                Thread.Sleep(AppSetting.TICKS);
+
+                Thread server = new Thread(() =>
+                {
+                    LazyPiratePattern.LazyPirateServer();
+                });
+                server.Start();
+
+                server.Join();
+                client.Join();
             }
         }
     }
