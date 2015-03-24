@@ -580,11 +580,19 @@ namespace ZeroMQTest.ConsoleUI
             }
             else
             {
-                Thread client = new Thread(() =>
+                int numOfClients = 3;
+                var clients = new List<Thread>();
+                for (int i = 0; i < numOfClients; i++)
                 {
-                    LazyPiratePattern.LazyPirateClient();
-                });
-                client.Start();
+                    string clientName = "LP_CLIENT" + i;
+                    Thread client = new Thread(() =>
+                    {
+                        LazyPiratePattern.LazyPirateClient(clientName);
+                    });
+                    client.Name = clientName;
+                    clients.Add(client);
+                    client.Start();
+                }
 
                 Thread.Sleep(AppSetting.TICKS);
 
@@ -592,10 +600,14 @@ namespace ZeroMQTest.ConsoleUI
                 {
                     LazyPiratePattern.LazyPirateServer();
                 });
+                server.Name = "LP_SERVER";
                 server.Start();
 
                 server.Join();
-                client.Join();
+                foreach (var client in clients)
+                {
+                    client.Join();
+                }
             }
         }
     }
