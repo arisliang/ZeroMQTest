@@ -27,6 +27,9 @@ namespace ZeroMQTest.Common.Patterns
                     var rnd = new Random();
 
                     ZMessage incoming = null;
+                    int crashCycle = 16;
+                    int overloadCycle = 4;
+                    int overloadMs = 1000;
                     while (true)
                     {
                         if ((incoming = responder.ReceiveMessage(out error)) == null)
@@ -39,15 +42,15 @@ namespace ZeroMQTest.Common.Patterns
                             cycles++;
 
                             // Simulate various problems, after a few cycles
-                            if (cycles > 16 && rnd.Next(16) == 0)
+                            if (cycles > crashCycle && rnd.Next(crashCycle) == 0)
                             {
                                 LogService.Info("{0}: simulating a crash", Thread.CurrentThread.Name);
                                 break;
                             }
-                            else if (cycles > 4 && rnd.Next(4) == 0)
+                            else if (cycles > overloadCycle && rnd.Next(overloadCycle) == 0)
                             {
                                 LogService.Warn("{0}: simulating CPU overload", Thread.CurrentThread.Name);
-                                Thread.Sleep(1000);
+                                Thread.Sleep(overloadMs);
                             }
 
                             LogService.Debug("{0}: normal request ({1})", Thread.CurrentThread.Name, incoming[0].ReadInt32());
@@ -136,7 +139,7 @@ namespace ZeroMQTest.Common.Patterns
                                     }
                                     else
                                     {
-                                        LogService.Error("{0}: malformed reply from server", Thread.CurrentThread.Name);
+                                        LogService.Error("{0}: malformed reply from server: {1}", Thread.CurrentThread.Name, incoming_sequence);
                                     }
                                 }
                             }
@@ -146,11 +149,13 @@ namespace ZeroMQTest.Common.Patterns
                                 {
                                     if (--retries_left == 0)
                                     {
-                                        LogService.Error("{0}: server seems to be offline, abandoning", Thread.CurrentThread.Name);
+                                        LogService.Error("{0}: server no response for sending {1} seems to be offline, abandoning.",
+                                            Thread.CurrentThread.Name, sequence);
                                         break;
                                     }
 
-                                    LogService.Warn("{0}: no response from server, retrying...", Thread.CurrentThread.Name);
+                                    LogService.Warn("{0}: no response for sending {1} from server, retrying...",
+                                        Thread.CurrentThread.Name, sequence);
 
                                     // Old socket is confused; close it and open a new one
                                     requester.Dispose();
@@ -160,7 +165,7 @@ namespace ZeroMQTest.Common.Patterns
                                         throw new ZException(error);
                                     }
 
-                                    LogService.Info("{0}: reconnected");
+                                    LogService.Info("{0}: reconnected to server.");
 
                                     // Send request again, on new socket
                                     using (var outgoing = ZFrame.Create(4))
