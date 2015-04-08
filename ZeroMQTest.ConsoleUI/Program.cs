@@ -39,7 +39,8 @@ namespace ZeroMQTest.ConsoleUI
                 //AsyncSrvTest();
                 //Peer1Test();
                 //Peer2Test();
-                LazyPiratePatternTest();
+                //LazyPiratePatternTest();
+                SimplePiratePatternTest();
             }
             catch (ZException ex)
             {
@@ -460,12 +461,12 @@ namespace ZeroMQTest.ConsoleUI
                 var clients = new List<Thread>(numOfClients);
                 for (int i = 0; i < numOfClients; i++)
                 {
-                    var worker = new Thread(() =>
+                    var client = new Thread(() =>
                     {
                         LBBroker.LBBroker_Client(context, i);
                     });
-                    worker.Name = "Client " + i;
-                    worker.Start();
+                    client.Name = "Client " + i;
+                    client.Start();
 
                     Thread.Sleep(AppSetting.WAITINGMS);
                 }
@@ -609,6 +610,67 @@ namespace ZeroMQTest.ConsoleUI
                     client.Join();
                 }
             }
+        }
+
+        [TraceAspect]
+        private static void SimplePiratePatternTest()
+        {
+            int numOfClients = 10;
+            int numofWorkers = 3;
+
+            // broker
+            var broker = new Thread(() =>
+            {
+                SimplePiratePattern.SimplePirate_Broker(numOfClients);
+            });
+            broker.Name = "SP Broker";
+            broker.Start();
+
+            Thread.Sleep(AppSetting.WAITINGMS);
+
+            // workers
+            var workers = new List<Thread>(numofWorkers);
+            for (int i = 0; i < numofWorkers; i++)
+            {
+                var worker = new Thread(() =>
+                {
+                    SimplePiratePattern.SimplePirate_Worker(i);
+                });
+                worker.Name = "Worker " + i;
+                worker.Start();
+
+                Thread.Sleep(AppSetting.WAITINGMS);
+            }
+
+            // clients
+            var clients = new List<Thread>(numOfClients);
+            for (int i = 0; i < numOfClients; i++)
+            {
+                string name = "CLIENT " + i;
+                var client = new Thread(() =>
+                {
+                    SimplePiratePattern.SimplePirate_Client(name);
+                });
+                client.Name = "Client " + i;
+                client.Start();
+
+                Thread.Sleep(AppSetting.WAITINGMS);
+            }
+
+            foreach (var worker in workers)
+            {
+                worker.Join();
+                LogService.Debug("{0}: worker done.", worker.Name);
+            }
+
+            foreach (var client in clients)
+            {
+                client.Join();
+                LogService.Debug("{0}: client done.", client.Name);
+            }
+
+            broker.Join();
+            LogService.Debug("{0}: broker done.", broker.Name);
         }
     }
 }

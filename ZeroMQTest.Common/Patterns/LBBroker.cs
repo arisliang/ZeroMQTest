@@ -188,38 +188,41 @@ namespace ZeroMQTest.Common.Patterns
                         {
                             LogService.Trace("{0}: Reiceved backend message.", Thread.CurrentThread.Name);
 
-                            // Handle worker activity on backend
-                            // incoming[0] is worker_id
-                            string worker_id = incoming[0].ReadString();
-                            // Queue worker identity for load-balancing
-                            LogService.Debug("Worker {0} is added to the queue.", worker_id);
-                            worker_queue.Add(worker_id);
-
-                            // incoming[1] is empty
-
-                            // incoming[2] is READY or else client_id
-                            string client_id = incoming[2].ReadString();
-                            if (client_id != "READY")
+                            using (incoming)
                             {
-                                // incoming[3] is empty
+                                // Handle worker activity on backend
+                                // incoming[0] is worker_id
+                                string worker_id = incoming[0].ReadString();
+                                // Queue worker identity for load-balancing
+                                LogService.Debug("Worker {0} is added to the queue.", worker_id);
+                                worker_queue.Add(worker_id);
 
-                                // incoming[4] is reply
-                                string reply = incoming[4].ReadString();
+                                // incoming[1] is empty
 
-                                using (var outgoing = new ZMessage())
+                                // incoming[2] is READY or else client_id
+                                string client_id = incoming[2].ReadString();
+                                if (client_id != "READY")
                                 {
-                                    outgoing.Add(new ZFrame(client_id));
-                                    outgoing.Add(new ZFrame());
-                                    outgoing.Add(new ZFrame(reply));
+                                    // incoming[3] is empty
 
-                                    // Send
-                                    frontend.Send(outgoing);
-                                }
+                                    // incoming[4] is reply
+                                    string reply = incoming[4].ReadString();
 
-                                if (--numOfClients == 0)
-                                {
-                                    // break the while (true) when all clients said Hello
-                                    break;
+                                    using (var outgoing = new ZMessage())
+                                    {
+                                        outgoing.Add(new ZFrame(client_id));
+                                        outgoing.Add(new ZFrame());
+                                        outgoing.Add(new ZFrame(reply));
+
+                                        // Send
+                                        frontend.Send(outgoing);
+                                    }
+
+                                    if (--numOfClients == 0)
+                                    {
+                                        // break the while (true) when all clients said Hello
+                                        break;
+                                    }
                                 }
                             }
                         }
@@ -231,35 +234,37 @@ namespace ZeroMQTest.Common.Patterns
                                 LogService.Trace("{0}: Reiceved frontend message.", Thread.CurrentThread.Name);
 
                                 // Here is how we handle a client request
-
-                                // incoming[0] is client_id
-                                string client_id = incoming[0].ReadString();
-
-                                // incoming[1] is empty
-
-                                // incoming[2] is request
-                                string requestText = incoming[2].ReadString();
-
-                                var worker_id = worker_queue.First();
-                                using (var outgoing = new ZMessage())
+                                using (incoming)
                                 {
-                                    outgoing.Add(new ZFrame(worker_id));
-                                    outgoing.Add(new ZFrame());
-                                    outgoing.Add(new ZFrame(client_id));
-                                    outgoing.Add(new ZFrame());
-                                    outgoing.Add(new ZFrame(requestText));
+                                    // incoming[0] is client_id
+                                    string client_id = incoming[0].ReadString();
 
-                                    // Send
-                                    backend.Send(outgoing);
+                                    // incoming[1] is empty
+
+                                    // incoming[2] is request
+                                    string requestText = incoming[2].ReadString();
+
+                                    var worker_id = worker_queue.First();
+                                    using (var outgoing = new ZMessage())
+                                    {
+                                        outgoing.Add(new ZFrame(worker_id));
+                                        outgoing.Add(new ZFrame());
+                                        outgoing.Add(new ZFrame(client_id));
+                                        outgoing.Add(new ZFrame());
+                                        outgoing.Add(new ZFrame(requestText));
+
+                                        // Send
+                                        backend.Send(outgoing);
+                                    }
+
+                                    // Dequeue the next worker identity
+                                    LogService.Debug("Worker {0} is removed from the queue.", worker_id);
+                                    worker_queue.Remove(worker_id);
                                 }
-
-                                // Dequeue the next worker identity
-                                LogService.Debug("Worker {0} is removed from the queue.", worker_id);
-                                worker_queue.Remove(worker_id);
                             }
                         }
 
-                        //LogService.Trace("{0}: no message from frontend/backend.", Thread.CurrentThread.Name);
+                        LogService.Trace("{0}: no message from frontend/backend.", Thread.CurrentThread.Name);
                     }
                 }
             }
