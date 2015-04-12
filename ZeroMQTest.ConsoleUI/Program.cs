@@ -40,7 +40,8 @@ namespace ZeroMQTest.ConsoleUI
                 //Peer1Test();
                 //Peer2Test();
                 //LazyPiratePatternTest();
-                SimplePiratePatternTest();
+                //SimplePiratePatternTest();
+                ParanoidPiratePatternTest();
             }
             catch (ZException ex)
             {
@@ -650,6 +651,69 @@ namespace ZeroMQTest.ConsoleUI
                 var client = new Thread(() =>
                 {
                     SimplePiratePattern.SimplePirate_Client(name);
+                });
+                client.Name = "Client " + i;
+                client.Start();
+
+                Thread.Sleep(AppSetting.WAITINGMS);
+            }
+
+            foreach (var worker in workers)
+            {
+                worker.Join();
+                LogService.Debug("{0}: worker done.", worker.Name);
+            }
+
+            foreach (var client in clients)
+            {
+                client.Join();
+                LogService.Debug("{0}: client done.", client.Name);
+            }
+
+            broker.Join();
+            LogService.Debug("{0}: broker done.", broker.Name);
+        }
+
+        [TraceAspect]
+        private static void ParanoidPiratePatternTest()
+        {
+            int numOfClients = 10;
+            int numofWorkers = 3;
+
+            // broker
+            var broker = new Thread(() =>
+            {
+                ParanoidPiratePattern.PP_Broker();
+            });
+            broker.Name = "PP Broker";
+            broker.Start();
+
+            Thread.Sleep(AppSetting.WAITINGMS);
+
+            // workers
+            var workers = new List<Thread>(numofWorkers);
+            string name = null;
+            for (int i = 0; i < numofWorkers; i++)
+            {
+                name = "WORKER " + i;
+                var worker = new Thread(() =>
+                {
+                    ParanoidPiratePattern.PP_Worker(name);
+                });
+                worker.Name = name;
+                worker.Start();
+
+                Thread.Sleep(AppSetting.WAITINGMS);
+            }
+
+            // clients
+            var clients = new List<Thread>(numOfClients);
+            for (int i = 0; i < numOfClients; i++)
+            {
+                name = "CLIENT " + i;
+                var client = new Thread(() =>
+                {
+                    ParanoidPiratePattern.PP_Client(name);
                 });
                 client.Name = "Client " + i;
                 client.Start();
